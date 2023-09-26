@@ -1,2 +1,1 @@
-a = 2
-print(type(a))
+li = [2]
