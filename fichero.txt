@@ -1,8 +1,0 @@
-holaaa& C:/Users/alumno/AppData/Local/Programs/Python/Python310/python.exe c:/Users/alumno/visual-workspace/josejulianSaavedra_procesos3.py
-hola
-& C:/Users/alumno/AppData/Local/Programs/Python/Python310/python.exe c:/Users/alumno/visual-workspace/josejulianSaavedra_procesos3.py
-hola
-holA
-HOLA
-& C:/Users/alumno/AppData/Local/Programs/Python/Python310/python.exe c:/Users/alumno/visual-workspace/josejulianSaavedra_procesos3.py
-HOLA
