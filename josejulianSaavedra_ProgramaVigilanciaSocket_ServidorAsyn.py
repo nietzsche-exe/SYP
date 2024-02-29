@@ -3,7 +3,7 @@ import asyncio
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-server_address = ('192.168.200.169', 5555)
+server_address = ('localhost', 5555)
 sock.bind(server_address)
 
 sock.listen(1)
@@ -18,29 +18,30 @@ async def escucharSocket():
 
         try:
             while True:
-                data = await loop.sock_recv(connection, 1024).decode()
+                data = await loop.sock_recv(connection, 1024)
                 if not data:
                     break
-                print(f'Se ha detectado un objeto: {data}')
+                data_str = data.decode()
+                print(f'Se ha detectado un objeto: {data_str}')
+                if data_str not in objetos:
+                    print("¡Objeto desconocido!")
                     
         finally:
             connection.close()
 
 async def imprimirPorPantalla():
     while True:
-        print(".")
+        print("este mensaje se imprime cada 5 segundos")
         await asyncio.sleep(5)
 
 if __name__ == "__main__":
     loop = asyncio.get_event_loop()
 
     # Create tasks
-    task1 = loop.create_task(escucharSocket())
-    task2 = loop.create_task(imprimirPorPantalla())
+    tasks = [escucharSocket(), imprimirPorPantalla()]
+    loop.run_until_complete(asyncio.gather(*tasks))
 
-    try:
-        loop.run_forever()
-    except KeyboardInterrupt:
-        pass
-    finally:
-        loop.close()
+    
+    
+
+    

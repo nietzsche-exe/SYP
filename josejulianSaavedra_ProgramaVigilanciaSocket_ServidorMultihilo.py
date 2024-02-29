@@ -4,7 +4,7 @@ import threading
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-server_address = ('192.168.200.169', 5555)
+server_address = ('localhost', 5555)
 sock.bind(server_address)
 
 sock.listen(1)
@@ -35,7 +35,7 @@ def escucharSocket():
         
 def imprimirPorPantalla():
     while True:
-        print(".")
+        print("este mensaje se imprime cada 5 segundos")
         time.sleep(5)
 
 

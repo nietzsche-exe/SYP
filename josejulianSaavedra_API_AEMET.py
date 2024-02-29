@@ -1,8 +1,18 @@
+from fastapi import FastAPI
 import pandas as pd
 import requests
 import json
+import uvicorn
 
-def get_codMunicipio():
+app = FastAPI()
+
+@app.get("/{municipio}")
+def get_prediccion(municipio: str):
+    codMunicipio = get_codMunicipio(municipio)
+    prediccion = json.loads(llamadas(codMunicipio).text)
+    return imprimirDatos(prediccion)
+
+def get_codMunicipio(municipio: str):
     
     dtype = {
         1: str,  # Segunda columna
@@ -13,14 +23,7 @@ def get_codMunicipio():
 
     df = pd.read_excel(archivo_excel, dtype=dtype)
 
-    quinta_columna_valor = input("introduce un municipio: ")
-    if quinta_columna_valor == "Murcia":
-        print()
-        print("Que buscas? Murcia no existe...")
-        print()
-        exit(0)
-
-    datos_filtrados = df[df.iloc[:, 4] == quinta_columna_valor]
+    datos_filtrados = df[df.iloc[:, 4] == municipio]
 
     segunda_columna = str(datos_filtrados.iloc[0, 1]).zfill(2)
     tercera_columna = str(datos_filtrados.iloc[0, 2]).zfill(3)
@@ -29,16 +32,16 @@ def get_codMunicipio():
     
     return codMunicipio
 
-def primeraLlamada():
+def llamadas(codMunicipio: str):
     
     baseUrl = "https://opendata.aemet.es/opendata"
-    municipio = get_codMunicipio()
+   
     endpoint = "/api/prediccion/especifica/municipio/horaria/"
     apikey = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJtZS5sbGFtby5qanVsaWFuQGdtYWlsLmNvbSIsImp0aSI6IjZlMjQ4ZDk2LWU1ZDYtNDg2YS1iMWJkLTlhNDU3MTc2ZGIwYSIsImlzcyI6IkFFTUVUIiwiaWF0IjoxNzA2NzkxNDM0LCJ1c2VySWQiOiI2ZTI0OGQ5Ni1lNWQ2LTQ4NmEtYjFiZC05YTQ1NzE3NmRiMGEiLCJyb2xlIjoiIn0.ZYN9g2-AVBQtfbxFph0z9n66MnuZLgAXLrC_6PTUyy0"
     
     authString = {"api_key": apikey}
    
-    url =  baseUrl + endpoint + municipio
+    url =  baseUrl + endpoint + codMunicipio
     response = requests.get(url, params=authString)
 
     if response.status_code != 200 :
@@ -57,48 +60,36 @@ def primeraLlamada():
             print(response.text)
             return None
 
-def imprimirDatos():
+def imprimirDatos(data):
     
-    data = json.loads(primeraLlamada().text)
-    
-    municipio = data[0]['nombre']
-    provincia = data[0]['provincia']
-    prediccion_horas = data[0]['prediccion']['dia'][0]
+    resultado = {}
+    try:
+        municipio = data[0]['nombre']
+        provincia = data[0]['provincia']
+        prediccion_horas = data[0]['prediccion']['dia'][0]
 
-    print("Municipio:", municipio)
-    print("Provincia: ", provincia)
-    
-    for hora in prediccion_horas['estadoCielo'][:6]:
-        print("Hora:", hora['periodo'])
-        print("Estado del cielo:", hora['descripcion'])
-        print()
+        resultado["Municipio"] = municipio
+        resultado["Provincia"] = provincia
+        resultado["EstadoCielo"] = [hora['descripcion'] for hora in prediccion_horas['estadoCielo'][:6]]
+        resultado["Temperatura"] = [hora['value'] for hora in prediccion_horas['temperatura'][:6]]
+        resultado["Precipitacion"] = [hora['value'] for hora in prediccion_horas['precipitacion'][:6]]
+        resultado["VientoAndRachaMax"] = [{"periodo": hora['periodo'], "direccion": hora.get("direccion", "No disponible"), "velocidad": hora.get("velocidad", "No disponible")} for hora in prediccion_horas['vientoAndRachaMax'][:6]]
 
-    for hora in prediccion_horas['temperatura'][:6]:
-        print("Hora:", hora['periodo'])
-        print("Temperatura:", hora['value'])
-        print()
+    except Exception as e:
+        resultado = {"error": str(e)}
 
-    for hora in prediccion_horas['precipitacion'][:6]:
-        print("Hora:", hora['periodo'])
-        print("Precipitación:", hora['value'])
-        print()
+    if(municipio == "Murcia"):
+        return "Murcia no exite"
+    else:
+        return resultado
         
-    for hora in prediccion_horas['vientoAndRachaMax'][:6]:
-        print("Hora:", hora['periodo'])
-        if 'direccion' in hora:
-            print("Dirección del viento:", hora['direccion'][0])
-        else:
-            print("Dirección del viento: No disponible")
-        
-        if 'velocidad' in hora:
-            print("Velocidad del viento:", hora['velocidad'][0])
-        else:
-            print("Velocidad del viento: No disponible")
-        print()
+@app.get("/")
+async def root():
+    return {"message": "Bienvenido a la API de Predicción del Tiempo"}        
         
 if __name__ == "__main__":
  
-  imprimirDatos()
+  uvicorn.run(app, host="192.168.200.188", port=8000)
 
     
             
